@@ -43,6 +43,18 @@ public class ImageDisplayable implements Displayable {
     private final File file;
     private Image image;
     private static final Logger LOGGER = LoggerUtils.getLogger();
+    // Add necessary fields (if they don't exist):
+    private String filename;
+    private String objectId;
+
+    // Add getter methods for the new fields:
+    public String getFilename() {
+        return filename;
+    }
+
+    public String getObjectId() {
+        return objectId;
+    }
 
     /**
      * Create a new image displayable.
@@ -57,6 +69,14 @@ public class ImageDisplayable implements Displayable {
     public ImageDisplayable(Image image) {
         this.file = null;
         this.image = image;
+    }
+
+    public ImageDisplayable(String filename, String objectId) {
+        // Initialize the ImageDisplayable with the filename and objectId
+        this.filename = filename; // Assuming you have a 'filename' field
+        this.objectId = objectId; // Assuming you have an 'objectId' field
+        // You might need to adjust how the image is loaded or referenced later
+        this.file = null;
     }
 
     /**
@@ -164,6 +184,6 @@ public class ImageDisplayable implements Displayable {
 
     @Override
     public void dispose() {
-        //Nothing needed here.
+        // Nothing needed here.
     }
 }

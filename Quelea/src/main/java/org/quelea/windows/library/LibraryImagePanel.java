@@ -45,51 +45,43 @@ import org.quelea.services.utils.QueleaProperties;
 import org.quelea.services.utils.Utils;
 import org.quelea.windows.main.QueleaApp;
 
-/**
- * The image panel in the library.
- * <p/>
- * 
- * @author Michael
- */
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import java.io.FileInputStream;
+
 public class LibraryImagePanel extends BorderPane {
 
     private final ImageListPanel imagePanel;
     private final ToolBar toolbar;
     private static final Logger LOGGER = LoggerUtils.getLogger();
+    private MongoClient mongoClient;
+    private MongoDatabase database;
+    private GridFSBucket gridFSBucket;
 
     /**
      * Create a new library image panel.
      */
     public LibraryImagePanel() {
-        LOGGER.log(Level.INFO, "Initializing LibraryImagePanel...");
-        String mongoDBImageDir = "";
+        LOGGER.log(Level.INFO, "Initializing LibraryImagePanel with MongoDB...");
         try {
-            LOGGER.log(Level.INFO, "Connecting to MongoDB to fetch image directory...");
-            com.mongodb.client.MongoClient mongoClient = com.mongodb.client.MongoClients
-                    .create("mongodb://localhost:27017");
-            com.mongodb.client.MongoDatabase database = mongoClient.getDatabase("quelea_db");
-            com.mongodb.client.MongoCollection<org.bson.Document> collection = database
-                    .getCollection("imageDirectories");
-            org.bson.Document document = collection.find().first();
-            if (document != null && document.containsKey("path")) {
-                mongoDBImageDir = document.getString("path");
-                LOGGER.log(Level.INFO, "Fetched image directory from MongoDB: " + mongoDBImageDir);
-            } else {
-                LOGGER.log(Level.WARNING, "No image directory found in MongoDB.");
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not fetch image directory from MongoDB", e);
-        }
-        imagePanel = new ImageListPanel(mongoDBImageDir);
-        setCenter(imagePanel);
-        toolbar = new ToolBar();
+            mongoClient = MongoClients.create("mongodb://localhost:27017"); // Consider configuration
+            database = mongoClient.getDatabase("quelea_db"); // Consider configuration
+            gridFSBucket = GridFSBuckets.create(database, "images"); // 'images' is the GridFS bucket name
+            imagePanel = new ImageListPanel(mongoClient, database, gridFSBucket);
+            setCenter(imagePanel);
+            toolbar = new ToolBar();
 
-        Button addButton = new Button("", new ImageView(new Image("file:icons/add.png")));
-        addButton.setTooltip(new Tooltip(LabelGrabber.INSTANCE.getLabel("add.images.panel")));
-        addButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent t) {
-                LOGGER.log(Level.INFO, "Add button clicked. Opening file chooser...");
+            Button addButton = new Button("", new ImageView(new Image("file:icons/add.png")));
+            addButton.setTooltip(new Tooltip(LabelGrabber.INSTANCE.getLabel("add.images.panel")));
+            addButton.setOnAction(t -> {
+                LOGGER.log(Level.INFO, "Add button clicked. Opening file chooser for MongoDB...");
                 FileChooser chooser = new FileChooser();
                 if (QueleaProperties.get().getLastDirectory() != null) {
                     chooser.setInitialDirectory(QueleaProperties.get().getLastDirectory());
@@ -98,107 +90,61 @@ public class LibraryImagePanel extends BorderPane {
                 chooser.setInitialDirectory(QueleaProperties.get().getImageDir().getAbsoluteFile());
                 List<File> files = chooser.showOpenMultipleDialog(QueleaApp.get().getMainWindow());
                 if (files != null) {
-                    LOGGER.log(Level.INFO, "Files selected: " + files);
-                    final boolean[] refresh = new boolean[] { false };
-                    for (final File f : files) {
+                    LOGGER.log(Level.INFO, "Files selected for MongoDB upload: " + files);
+                    for (File f : files) {
                         QueleaProperties.get().setLastDirectory(f.getParentFile());
-                        try {
-                            final Path sourceFile = f.getAbsoluteFile().toPath();
-                            LOGGER.log(Level.INFO, "Processing file: " + f.getName());
-
-                            if (new File(imagePanel.getDir(), f.getName()).exists()) {
-                                LOGGER.log(Level.INFO, "File already exists: " + f.getName());
-                                Dialog d = Dialog
-                                        .buildConfirmation(LabelGrabber.INSTANCE.getLabel("confirm.overwrite.title"),
-                                                f.getName() + "\n"
-                                                        + LabelGrabber.INSTANCE.getLabel("confirm.overwrite.text"))
-                                        .addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.replace.button"),
-                                                new EventHandler<ActionEvent>() {
-                                                    @Override
-                                                    public void handle(ActionEvent t) {
-                                                        try {
-                                                            LOGGER.log(Level.INFO, "Replacing file: " + f.getName());
-                                                            Files.delete(Paths.get(imagePanel.getDir(), f.getName()));
-                                                            Files.copy(sourceFile,
-                                                                    Paths.get(imagePanel.getDir(), f.getName()),
-                                                                    StandardCopyOption.COPY_ATTRIBUTES);
-                                                            refresh[0] = true;
-
-                                                            // Save the new file path to MongoDB
-                                                            saveFilePathToMongoDB(Paths
-                                                                    .get(imagePanel.getDir(), f.getName()).toString());
-                                                        } catch (IOException e) {
-                                                            LOGGER.log(Level.WARNING,
-                                                                    "Could not delete or copy file back into directory.",
-                                                                    e);
-                                                        }
-                                                    }
-                                                })
-                                        .addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.continue.button"),
-                                                new EventHandler<ActionEvent>() {
-                                                    @Override
-                                                    public void handle(ActionEvent t) {
-                                                        LOGGER.log(Level.INFO, "Skipping file replacement for: " + f.getName());
-                                                    }
-                                                })
-                                        .build();
-                                d.showAndWait();
-                            } else {
-                                LOGGER.log(Level.INFO, "Copying new file: " + f.getName());
-                                Files.copy(sourceFile, Paths.get(imagePanel.getDir(), f.getName()),
-                                        StandardCopyOption.COPY_ATTRIBUTES);
-                                refresh[0] = true;
-
-                                // Save the new file path to MongoDB
-                                saveFilePathToMongoDB(Paths.get(imagePanel.getDir(), f.getName()).toString());
-                            }
-                        } catch (IOException ex) {
-                            LOGGER.log(Level.WARNING, "Could not copy file into ImagePanel from FileChooser selection",
-                                    ex);
+                        try (FileInputStream inputStream = new FileInputStream(f)) {
+                            LOGGER.log(Level.INFO, "Uploading file to MongoDB GridFS: " + f.getName());
+                            gridFSBucket.uploadFromStream(f.getName(), inputStream);
+                            // Optionally save metadata if needed
+                        } catch (IOException e) {
+                            LOGGER.log(Level.WARNING, "Could not read file for MongoDB upload: " + f.getName(), e);
                         }
                     }
-                    if (refresh[0]) {
-                        LOGGER.log(Level.INFO, "Refreshing image panel...");
-                        imagePanel.refresh();
-                    }
+                    LOGGER.log(Level.INFO, "Refreshing image panel after MongoDB upload...");
+                    imagePanel.refresh();
                 } else {
-                    LOGGER.log(Level.INFO, "No files selected.");
+                    LOGGER.log(Level.INFO, "No files selected for MongoDB upload.");
                 }
-            }
-        });
+            });
 
-        HBox toolbarBox = new HBox();
-        toolbar.setOrientation(Orientation.VERTICAL);
-        toolbarBox.getChildren().add(toolbar);
-        Utils.setToolbarButtonStyle(addButton);
-        toolbar.getItems().add(addButton);
-        setLeft(toolbarBox);
-        LOGGER.log(Level.INFO, "LibraryImagePanel initialized successfully.");
-    }
+            HBox toolbarBox = new HBox();
+            toolbar.setOrientation(Orientation.VERTICAL);
+            toolbarBox.getChildren().add(toolbar);
+            Utils.setToolbarButtonStyle(addButton);
+            toolbar.getItems().add(addButton);
+            setLeft(toolbarBox);
+            LOGGER.log(Level.INFO, "LibraryImagePanel initialized successfully with MongoDB support.");
 
-    private void saveFilePathToMongoDB(String filePath) {
-        LOGGER.log(Level.INFO, "Saving file path to MongoDB: " + filePath);
-        try {
-            com.mongodb.client.MongoClient mongoClient = com.mongodb.client.MongoClients
-                    .create("mongodb://localhost:27017");
-            com.mongodb.client.MongoDatabase database = mongoClient.getDatabase("quelea_db");
-            com.mongodb.client.MongoCollection<org.bson.Document> collection = database.getCollection("uploadedFiles");
-            org.bson.Document document = new org.bson.Document("path", filePath);
-            collection.insertOne(document);
-            LOGGER.log(Level.INFO, "File path saved to MongoDB: " + filePath);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Could not save file path to MongoDB", e);
+            LOGGER.log(Level.SEVERE, "Error initializing LibraryImagePanel with MongoDB", e);
+            throw new RuntimeException("Failed to initialize LibraryImagePanel with MongoDB", e);
         }
     }
 
-    /**
-     * Get the image list panel.
-     * <p/>
-     * 
-     * @return the image list panel.
-     */
+    private void saveImageMetadata(String fileId, String originalName) {
+        try {
+            com.mongodb.client.MongoCollection<Document> metadataCollection = database.getCollection("imageMetadata"); // Consider configuration
+            Document metadata = new Document("gridFSFileId", fileId)
+                    .append("originalName", originalName)
+                    .append("uploadDate", java.time.LocalDateTime.now().toString());
+            metadataCollection.insertOne(metadata);
+            LOGGER.log(Level.INFO, "Image metadata saved to MongoDB: " + metadata);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Could not save image metadata to MongoDB", e);
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
+        super.finalize();
+    }
+
     public ImageListPanel getImagePanel() {
-        LOGGER.log(Level.INFO, "Getting image panel...");
+        LOGGER.log(Level.INFO, "Getting image panel (now potentially MongoDB-backed)...");
         return imagePanel;
     }
 }
