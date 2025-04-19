@@ -52,10 +52,22 @@ public class ScheduleListNode extends HBox {
         liveIcon.setFitHeight(10);
         liveIcon.setFitWidth(10);
         liveIcon.setVisible(false);
-        getChildren().add(icon);
+    
+        if (icon != null) {
+            getChildren().add(icon);
+        } else {
+            // Handle the case where the preview icon is null.
+            // You could add a placeholder or just not add anything.
+            // Logging a warning here might also be helpful.
+            //LOGGER.log(Level.WARNING, "Preview icon was null for displayable: {0}", displayable.getPreviewText());
+            // If you want to add a placeholder:
+            // ImageView placeholder = new ImageView(new Image("file:icons/image_placeholder.png", 30, 30, true, true));
+            // getChildren().add(placeholder);
+        }
+    
         getChildren().add(new Label(displayable.getPreviewText()));
         getChildren().add(liveIcon);
-
+    
         if (displayable instanceof TextDisplayable || displayable instanceof TimerDisplayable) {
             themeButton = new Button("", new ImageView(new Image("file:icons/theme.png", 16, 16, false, true)));
             if (displayable instanceof TextDisplayable) {

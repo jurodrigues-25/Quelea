@@ -143,21 +143,63 @@ public class ImageDisplayable implements Displayable {
      *
      * @return the preview icon.
      */
-    @Override
+   /*  @Override
     public ImageView getPreviewIcon() {
         ImageView small = new ImageView(new Image("file:" + file.getAbsolutePath(), 30, 30, false, true));
         return small;
-    }
+    } */
 
+
+    @Override
+public ImageView getPreviewIcon() {
+    if (file != null) {
+        return new ImageView(new Image("file:" + file.getAbsolutePath(), 30, 30, false, true));
+    } else if (objectId != null) {
+        // If the file is null, but we have an objectId, it means the image
+        // was likely loaded from MongoDB. We need to retrieve the image data.
+        // **Important:** You need access to your GridFSBucket here to load the data.
+        // Assuming you have a way to access it (e.g., through a static instance
+        // or by passing it to the ImageDisplayable or this method).
+
+        // **Placeholder - Replace with your actual MongoDB retrieval logic**
+        byte[] imageData = loadImageDataFromMongoDB(objectId);
+
+        if (imageData != null) {
+            Image previewImage = new Image(new java.io.ByteArrayInputStream(imageData), 30, 30, true, true);
+            return new ImageView(previewImage);
+        } else {
+            LOGGER.log(Level.WARNING, "Could not load preview icon from MongoDB for ObjectId: {0}", objectId);
+            return null; // Or return a default error icon
+        }
+    }
+    return null; // If both file and objectId are null
+}
+
+// **You need to implement this method to fetch image data from MongoDB**
+private byte[] loadImageDataFromMongoDB(String objectIdString) {
+    // Access your MongoClient, database, and GridFSBucket here.
+    // Convert objectIdString to ObjectId.
+    // Open a download stream from GridFS using the ObjectId.
+    // Read the stream into a byte array.
+    // Handle potential IOExceptions.
+    // Return the byte array, or null if there's an error.
+    return null; // Placeholder
+}
     /**
      * Get the preview text for the image.
      *
      * @return the file name.
      */
     @Override
-    public String getPreviewText() {
+public String getPreviewText() {
+    if (file != null) {
         return file.getName();
+    } else if (filename != null) {
+        return filename;
+    } else {
+        return "Image"; // Or some other default text if both file and filename are null
     }
+}
 
     /**
      * Get any resources this displayable needs (in this case the image.)
