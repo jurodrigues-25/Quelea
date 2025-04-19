@@ -127,6 +127,7 @@ public class LibraryPanel extends VBox {
      * @return the library image panel.
      */
     public LibraryImagePanel getImagePanel() {
+        LOGGER.log(Level.INFO, "Inside getImagePanel() method");
         return imagePanel;
     }
 

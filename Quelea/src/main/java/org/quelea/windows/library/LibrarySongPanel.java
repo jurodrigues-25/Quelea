@@ -38,6 +38,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+
+import org.quelea.data.db.SongManager;
 import org.quelea.data.displayable.SongDisplayable;
 import org.quelea.services.languages.LabelGrabber;
 import org.quelea.services.utils.QueleaProperties;
@@ -59,6 +61,7 @@ public class LibrarySongPanel extends BorderPane {
     private final LibrarySongList songList;
     private final Button removeButton;
     private final Button addButton;
+    private final Button refreshButton;
 
     /**
      * Create and initialise the library song panel.
@@ -130,6 +133,14 @@ public class LibrarySongPanel extends BorderPane {
         addButton.setTooltip(new Tooltip(LabelGrabber.INSTANCE.getLabel("add.song.text")));
         addButton.setOnAction(new NewSongActionHandler());
         toolbar.getItems().add(addButton);
+
+        ImageView refreshIV = new ImageView(new Image(darkTheme ? "file:icons/refresh16.png" : "file:icons/refresh16.png"));
+        refreshButton = new Button("", refreshIV);
+        Utils.setToolbarButtonStyle(refreshButton);
+        refreshButton.setTooltip(new Tooltip(LabelGrabber.INSTANCE.getLabel("add.song.text")));
+        refreshButton.setOnAction(event -> SongManager.get(true).fireUpdate());
+        toolbar.getItems().add(refreshButton);
+
         ImageView removeIV = new ImageView(new Image(darkTheme ? "file:icons/removedb-light.png" : "file:icons/removedb.png"));
         removeIV.setFitWidth(16);
         removeIV.setFitHeight(16);

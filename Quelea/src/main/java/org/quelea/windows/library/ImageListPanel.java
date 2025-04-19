@@ -24,6 +24,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javafx.application.Platform;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -55,6 +57,8 @@ import org.quelea.windows.main.QueleaApp;
  * @author Michael
  */
 public class ImageListPanel extends BorderPane {
+        private static final Logger LOGGER = Logger.getLogger(ImageManager.class.getName());
+
 
     private static final String BORDER_STYLE_SELECTED = "-fx-padding: 0.2em;-fx-border-color: #0093ff;-fx-border-radius: 5;-fx-border-width: 0.1em;";
     private static final String BORDER_STYLE_DESELECTED = "-fx-padding: 0.2em;-fx-border-color: rgb(0,0,0,0);-fx-border-radius: 5;-fx-border-width: 0.1em;";
@@ -68,6 +72,8 @@ public class ImageListPanel extends BorderPane {
      * @param dir the directory to use.
      */
     public ImageListPanel(String dir) {
+        LOGGER.log(Level.INFO, "Image List plane");
+
         this.dir = dir;
         imageList = new TilePane();
         imageList.setAlignment(Pos.CENTER);
@@ -180,5 +186,7 @@ public class ImageListPanel extends BorderPane {
 
     public void changeDir(File absoluteFile) {
         dir = absoluteFile.getAbsolutePath();
+        LOGGER.log(Level.INFO, "Image Change");
+
     }
 }

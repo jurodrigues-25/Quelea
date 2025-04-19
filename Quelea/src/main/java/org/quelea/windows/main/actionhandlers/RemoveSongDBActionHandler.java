@@ -73,7 +73,7 @@ public class RemoveSongDBActionHandler implements EventHandler<ActionEvent> {
             songList.setLoading(true);
             new Thread(() -> {
                 ObservableList<SongDisplayable> items = songList.getListView().getSelectionModel().getSelectedItems();
-                if (!SongManager.get().removeSongs(items)) {
+                if (!SongManager.get(true).removeSongs(items)) {
                     Platform.runLater(() -> Dialog.showError(LabelGrabber.INSTANCE.getLabel("error.text"), LabelGrabber.INSTANCE.getLabel("error.removing.song.db")));
                 } else {
                     items.forEach(s -> s.setID(-1));

@@ -289,19 +289,19 @@ public class RCHandler {
             if (searchString == null || searchString.trim().isEmpty() || Pattern.compile("[^\\w ]", Pattern.UNICODE_CHARACTER_CLASS).matcher(searchString).replaceAll("").isEmpty()) {
                 return LabelGrabber.INSTANCE.getLabel("invalid.search");
             } else {
-                SongDisplayable[] titleSongs = SongManager.get().getIndex().filter(searchString, SongSearchIndex.FilterType.TITLE);
+                SongDisplayable[] titleSongs = SongManager.get(true).getIndex().filter(searchString, SongSearchIndex.FilterType.TITLE);
                 for (SongDisplayable song : titleSongs) {
                     song.setLastSearch(searchString);
                     songs.add(song);
                 }
 
-                SongDisplayable[] lyricSongs = SongManager.get().getIndex().filter(searchString, SongSearchIndex.FilterType.BODY);
+                SongDisplayable[] lyricSongs = SongManager.get(true).getIndex().filter(searchString, SongSearchIndex.FilterType.BODY);
                 for (SongDisplayable song : lyricSongs) {
                     song.setLastSearch(null);
                     songs.add(song);
                 }
 
-                SongDisplayable[] authorSongs = SongManager.get().getIndex().filter(searchString, SongSearchIndex.FilterType.AUTHOR);
+                SongDisplayable[] authorSongs = SongManager.get(true).getIndex().filter(searchString, SongSearchIndex.FilterType.AUTHOR);
                 songs.addAll(Arrays.asList(authorSongs));
             }
 
@@ -326,7 +326,7 @@ public class RCHandler {
         if (he.getRequestURI().toString().contains("/add/")) {
             songIDString = he.getRequestURI().toString().split("/add/", 2)[1];
             songID = Long.parseLong(songIDString);
-            SongDisplayable sd = SongManager.get().getIndex().getByID(songID);
+            SongDisplayable sd = SongManager.get(true).getIndex().getByID(songID);
 
             if (QueleaProperties.get().getUseDefaultTranslation()) {
                 String defaultTranslation = QueleaProperties.get().getDefaultTranslationName();
@@ -367,8 +367,8 @@ public class RCHandler {
         if (he.getRequestURI().toString().contains("/song/")) {
             songIDString = he.getRequestURI().toString().split("/song/")[1];
             songID = Long.parseLong(songIDString);
-            if (SongManager.get().getIndex().getByID(songID) != null) {
-                SongDisplayable sd = SongManager.get().getIndex().getByID(songID);
+            if (SongManager.get(true).getIndex().getByID(songID) != null) {
+                SongDisplayable sd = SongManager.get(true).getIndex().getByID(songID);
                 StringBuilder response = new StringBuilder();
                 response.append("<!DOCTYPE html><html>");
                 response.append("<head><meta charset=\"UTF-8\"></head>");

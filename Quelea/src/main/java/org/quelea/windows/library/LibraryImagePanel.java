@@ -48,6 +48,7 @@ import org.quelea.windows.main.QueleaApp;
 /**
  * The image panel in the library.
  * <p/>
+ * 
  * @author Michael
  */
 public class LibraryImagePanel extends BorderPane {
@@ -60,7 +61,26 @@ public class LibraryImagePanel extends BorderPane {
      * Create a new library image panel.
      */
     public LibraryImagePanel() {
-        imagePanel = new ImageListPanel(QueleaProperties.get().getImageDir().getAbsolutePath());
+        LOGGER.log(Level.INFO, "Initializing LibraryImagePanel...");
+        String mongoDBImageDir = "";
+        try {
+            LOGGER.log(Level.INFO, "Connecting to MongoDB to fetch image directory...");
+            com.mongodb.client.MongoClient mongoClient = com.mongodb.client.MongoClients
+                    .create("mongodb://localhost:27017");
+            com.mongodb.client.MongoDatabase database = mongoClient.getDatabase("quelea_db");
+            com.mongodb.client.MongoCollection<org.bson.Document> collection = database
+                    .getCollection("imageDirectories");
+            org.bson.Document document = collection.find().first();
+            if (document != null && document.containsKey("path")) {
+                mongoDBImageDir = document.getString("path");
+                LOGGER.log(Level.INFO, "Fetched image directory from MongoDB: " + mongoDBImageDir);
+            } else {
+                LOGGER.log(Level.WARNING, "No image directory found in MongoDB.");
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Could not fetch image directory from MongoDB", e);
+        }
+        imagePanel = new ImageListPanel(mongoDBImageDir);
         setCenter(imagePanel);
         toolbar = new ToolBar();
 
@@ -69,6 +89,7 @@ public class LibraryImagePanel extends BorderPane {
         addButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent t) {
+                LOGGER.log(Level.INFO, "Add button clicked. Opening file chooser...");
                 FileChooser chooser = new FileChooser();
                 if (QueleaProperties.get().getLastDirectory() != null) {
                     chooser.setInitialDirectory(QueleaProperties.get().getLastDirectory());
@@ -76,64 +97,108 @@ public class LibraryImagePanel extends BorderPane {
                 chooser.getExtensionFilters().add(FileFilters.IMAGES);
                 chooser.setInitialDirectory(QueleaProperties.get().getImageDir().getAbsoluteFile());
                 List<File> files = chooser.showOpenMultipleDialog(QueleaApp.get().getMainWindow());
-                if(files != null) {
-                    final boolean[] refresh = new boolean[]{false};
-                    for(final File f : files) {
+                if (files != null) {
+                    LOGGER.log(Level.INFO, "Files selected: " + files);
+                    final boolean[] refresh = new boolean[] { false };
+                    for (final File f : files) {
                         QueleaProperties.get().setLastDirectory(f.getParentFile());
                         try {
                             final Path sourceFile = f.getAbsoluteFile().toPath();
+                            LOGGER.log(Level.INFO, "Processing file: " + f.getName());
 
-                            if(new File(imagePanel.getDir(), f.getName()).exists()) {
-                                Dialog d = Dialog.buildConfirmation(LabelGrabber.INSTANCE.getLabel("confirm.overwrite.title"), f.getName() + "\n" + LabelGrabber.INSTANCE.getLabel("confirm.overwrite.text"))
-                                        .addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.replace.button"), new EventHandler<ActionEvent>() {
-                                            @Override
-                                            public void handle(ActionEvent t) {
-                                                try {
-                                                    Files.delete(Paths.get(imagePanel.getDir(), f.getName()));
-                                                    Files.copy(sourceFile, Paths.get(imagePanel.getDir(), f.getName()), StandardCopyOption.COPY_ATTRIBUTES);
-                                                    refresh[0] = true;
-                                                }
-                                                catch(IOException e) {
-                                                    LOGGER.log(Level.WARNING, "Could not delete or copy file back into directory.", e);
-                                                }
-                                            }
-                                        }).addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.continue.button"), new EventHandler<ActionEvent>() {
-                                            @Override
-                                            public void handle(ActionEvent t) {
-                                                // DO NOTHING
-                                            }
-                                        }).build();
+                            if (new File(imagePanel.getDir(), f.getName()).exists()) {
+                                LOGGER.log(Level.INFO, "File already exists: " + f.getName());
+                                Dialog d = Dialog
+                                        .buildConfirmation(LabelGrabber.INSTANCE.getLabel("confirm.overwrite.title"),
+                                                f.getName() + "\n"
+                                                        + LabelGrabber.INSTANCE.getLabel("confirm.overwrite.text"))
+                                        .addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.replace.button"),
+                                                new EventHandler<ActionEvent>() {
+                                                    @Override
+                                                    public void handle(ActionEvent t) {
+                                                        try {
+                                                            LOGGER.log(Level.INFO, "Replacing file: " + f.getName());
+                                                            Files.delete(Paths.get(imagePanel.getDir(), f.getName()));
+                                                            Files.copy(sourceFile,
+                                                                    Paths.get(imagePanel.getDir(), f.getName()),
+                                                                    StandardCopyOption.COPY_ATTRIBUTES);
+                                                            refresh[0] = true;
+
+                                                            // Save the new file path to MongoDB
+                                                            saveFilePathToMongoDB(Paths
+                                                                    .get(imagePanel.getDir(), f.getName()).toString());
+                                                        } catch (IOException e) {
+                                                            LOGGER.log(Level.WARNING,
+                                                                    "Could not delete or copy file back into directory.",
+                                                                    e);
+                                                        }
+                                                    }
+                                                })
+                                        .addLabelledButton(LabelGrabber.INSTANCE.getLabel("file.continue.button"),
+                                                new EventHandler<ActionEvent>() {
+                                                    @Override
+                                                    public void handle(ActionEvent t) {
+                                                        LOGGER.log(Level.INFO, "Skipping file replacement for: " + f.getName());
+                                                    }
+                                                })
+                                        .build();
                                 d.showAndWait();
-                            }
-                            else {
-                                Files.copy(sourceFile, Paths.get(imagePanel.getDir(), f.getName()), StandardCopyOption.COPY_ATTRIBUTES);
+                            } else {
+                                LOGGER.log(Level.INFO, "Copying new file: " + f.getName());
+                                Files.copy(sourceFile, Paths.get(imagePanel.getDir(), f.getName()),
+                                        StandardCopyOption.COPY_ATTRIBUTES);
                                 refresh[0] = true;
+
+                                // Save the new file path to MongoDB
+                                saveFilePathToMongoDB(Paths.get(imagePanel.getDir(), f.getName()).toString());
                             }
-                        }
-                        catch(IOException ex) {
-                            LOGGER.log(Level.WARNING, "Could not copy file into ImagePanel from FileChooser selection", ex);
+                        } catch (IOException ex) {
+                            LOGGER.log(Level.WARNING, "Could not copy file into ImagePanel from FileChooser selection",
+                                    ex);
                         }
                     }
-                    if(refresh[0]) {
+                    if (refresh[0]) {
+                        LOGGER.log(Level.INFO, "Refreshing image panel...");
                         imagePanel.refresh();
                     }
+                } else {
+                    LOGGER.log(Level.INFO, "No files selected.");
                 }
             }
         });
+
         HBox toolbarBox = new HBox();
         toolbar.setOrientation(Orientation.VERTICAL);
         toolbarBox.getChildren().add(toolbar);
         Utils.setToolbarButtonStyle(addButton);
         toolbar.getItems().add(addButton);
         setLeft(toolbarBox);
+        LOGGER.log(Level.INFO, "LibraryImagePanel initialized successfully.");
+    }
+
+    private void saveFilePathToMongoDB(String filePath) {
+        LOGGER.log(Level.INFO, "Saving file path to MongoDB: " + filePath);
+        try {
+            com.mongodb.client.MongoClient mongoClient = com.mongodb.client.MongoClients
+                    .create("mongodb://localhost:27017");
+            com.mongodb.client.MongoDatabase database = mongoClient.getDatabase("quelea_db");
+            com.mongodb.client.MongoCollection<org.bson.Document> collection = database.getCollection("uploadedFiles");
+            org.bson.Document document = new org.bson.Document("path", filePath);
+            collection.insertOne(document);
+            LOGGER.log(Level.INFO, "File path saved to MongoDB: " + filePath);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Could not save file path to MongoDB", e);
+        }
     }
 
     /**
      * Get the image list panel.
      * <p/>
+     * 
      * @return the image list panel.
      */
     public ImageListPanel getImagePanel() {
+        LOGGER.log(Level.INFO, "Getting image panel...");
         return imagePanel;
     }
 }

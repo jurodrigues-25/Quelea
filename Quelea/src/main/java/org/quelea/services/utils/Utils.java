@@ -394,7 +394,7 @@ public final class Utils {
 		final Runnable updateRunner = new Runnable() {
 			@Override
 			public void run() {
-				boolean result = SongManager.get().updateSong(song);
+				boolean result = SongManager.get(true).updateSong(song);
 				if (result && song.checkDBUpdate()) {
 					ObservableList<SongDisplayable> songs = QueleaApp.get().getMainWindow().getMainPanel().getLibraryPanel().getLibrarySongPanel().getSongList().getListView().getItems();
 					int replaceIdx = -1;

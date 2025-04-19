@@ -65,8 +65,8 @@ public class SelectImportedSongsDialog extends SelectSongsDialog {
                         });
                         List<SongDisplayable> songDisplayables = new ArrayList<>();
                         songDisplayables.addAll(getSelectedSongs());
-                        SongManager.get().addSong(songDisplayables, false);
-                        SongManager.get().fireUpdate();
+                        SongManager.get(true).addSong(songDisplayables, false);
+                        SongManager.get(true).fireUpdate();
                         if(statusPanel != null) {
                             statusPanel.done();
                         }

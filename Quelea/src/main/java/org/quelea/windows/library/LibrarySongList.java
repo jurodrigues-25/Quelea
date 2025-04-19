@@ -192,7 +192,7 @@ public class LibrarySongList extends StackPane {
             songList.setCellFactory(DisplayableListCell.forListView(popupMenu, callback, null));
         }
         new Thread(this::refresh).start();
-        SongManager.get().registerDatabaseListener(this::refresh);
+        SongManager.get(true).registerDatabaseListener(this::refresh);
     }
     private ExecutorService filterService = Executors.newSingleThreadExecutor();
     private Future<?> filterFuture;
@@ -217,7 +217,7 @@ public class LibrarySongList extends StackPane {
             if (search == null || search.trim().isEmpty() || Pattern.compile("[^\\w ]", Pattern.UNICODE_CHARACTER_CLASS).matcher(search).replaceAll("").isEmpty()) {
                 TreeSet<SongDisplayable> m = new TreeSet<>();
                 LOGGER.log(Level.INFO, "Empty song search performed");
-                for (SongDisplayable song : SongManager.get().getSongs()) {
+                for (SongDisplayable song : SongManager.get(true).getSongs()) {
                     song.setLastSearch(null);
                     m.add(song);
                 }
@@ -226,7 +226,7 @@ public class LibrarySongList extends StackPane {
             } else {
                 TreeSet<SongDisplayable> m = new TreeSet<>();
                 LOGGER.log(Level.INFO, "Filtering songs by title");
-                SongDisplayable[] titleSongs = SongManager.get().getIndex().filter(search, SongSearchIndex.FilterType.TITLE);
+                SongDisplayable[] titleSongs = SongManager.get(true).getIndex().filter(search, SongSearchIndex.FilterType.TITLE);
                 LOGGER.log(Level.INFO, "Filtered songs by title");
                 for (SongDisplayable song : titleSongs) {
                     song.setLastSearch(search);
@@ -237,7 +237,7 @@ public class LibrarySongList extends StackPane {
                 LOGGER.log(Level.INFO, "{0} songs in list", songs.size());
 
                 LOGGER.log(Level.INFO, "Filtering songs by lyrics");
-                SongDisplayable[] lyricSongs = SongManager.get().getIndex().filter(search, SongSearchIndex.FilterType.BODY);
+                SongDisplayable[] lyricSongs = SongManager.get(true).getIndex().filter(search, SongSearchIndex.FilterType.BODY);
                 LOGGER.log(Level.INFO, "Filtered songs by lyrics");
                 for (SongDisplayable song : lyricSongs) {
                     song.setLastSearch(null);
@@ -248,7 +248,7 @@ public class LibrarySongList extends StackPane {
                 LOGGER.log(Level.INFO, "{0} songs in list", songs.size());
 
                 LOGGER.log(Level.INFO, "Filtering songs by author");
-                SongDisplayable[] authorSongs = SongManager.get().getIndex().filter(search, SongSearchIndex.FilterType.AUTHOR);
+                SongDisplayable[] authorSongs = SongManager.get(true).getIndex().filter(search, SongSearchIndex.FilterType.AUTHOR);
                 LOGGER.log(Level.INFO, "Filtered songs by author");
                 for (SongDisplayable song : authorSongs) {
                     m.add(song);
@@ -305,7 +305,7 @@ public class LibrarySongList extends StackPane {
         Platform.runLater(() -> {
             setLoading(true);
         });
-        final ObservableList<SongDisplayable> songs = FXCollections.observableArrayList(SongManager.get().getSongs(loadingOverlay));
+        final ObservableList<SongDisplayable> songs = FXCollections.observableArrayList(SongManager.get(true).getSongs(loadingOverlay));
         Platform.runLater(() -> {
             songList.itemsProperty().set(songs);
             setLoading(false);

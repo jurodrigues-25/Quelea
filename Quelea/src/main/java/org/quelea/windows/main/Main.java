@@ -230,7 +230,7 @@ public final class Main extends Application {
                     LOGGER.log(Level.INFO, "Loading bibles done");
                 });
 
-                if (SongManager.get() == null) {
+                if (SongManager.get(true) == null) {
                     Platform.runLater(() -> {
                         Dialog.showAndWaitError(LabelGrabber.INSTANCE.getLabel("already.running.title"), LabelGrabber.INSTANCE.getLabel("already.running.error"));
                         System.exit(1);

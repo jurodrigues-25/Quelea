@@ -28,7 +28,7 @@ public class SongListExporter {
     private static final Logger LOGGER = LoggerUtils.getLogger();
 
     public void exportToFile(File file) {
-        final List<String> songNames = Arrays.stream(SongManager.get().getSongs())
+        final List<String> songNames = Arrays.stream(SongManager.get(true).getSongs())
                 .map(s -> {
                     String out = escape(s.getTitle()) + "," + escape(s.getAuthor());
                     if (s.getCcli() != null && !s.getCcli().isEmpty()) {

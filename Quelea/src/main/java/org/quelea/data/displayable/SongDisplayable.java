@@ -461,7 +461,7 @@ public class SongDisplayable implements TextDisplayable, Comparable<SongDisplaya
      */
     public void matchID() {
         if (id == -1 && updateInDB) {
-            for (SongDisplayable song : SongManager.get().getSongs()) {
+            for (SongDisplayable song : SongManager.get(true).getSongs()) {
                 if (this.title.equals(song.title) && getLyrics(true, true, false).equals(song.getLyrics(true, true, false)) && this.author.equals(song.author)) {
                     id = song.getID();
                 }

@@ -1,6 +1,7 @@
 package org.quelea.services.utils;
 
 public class QueleaPropertyKeys {
+    public static final String useMongoDB = "useMongoDB";
     public static final String languageFileKey = "language.file";
     public static final String enableDictKey = "enable.dict";
     public static final String videoTabKey = "video.tab";

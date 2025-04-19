@@ -8,14 +8,17 @@ package org.quelea.services.utils;
 import java.util.WeakHashMap;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  * An image manager that should be used to deal with all large images (to keep
  * memory overhead to a minimum.)
  * <p>
  * @author Michael
  */
+
 public class ImageManager {
+    private static final Logger LOGGER = Logger.getLogger(ImageManager.class.getName());
 
     public static final ImageManager INSTANCE = new ImageManager();
     /**
@@ -26,6 +29,8 @@ public class ImageManager {
     private final WeakHashMap<String, Image> images;
 
     private ImageManager() {
+        LOGGER.log(Level.INFO, "Initiated the image manager.");
+
         images = new WeakHashMap<>();
     }
 

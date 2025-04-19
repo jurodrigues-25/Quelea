@@ -57,7 +57,7 @@ public class ExportMenu extends Menu {
 
         qspItem = new MenuItem(LabelGrabber.INSTANCE.getLabel("qsp.button"), new ImageView(new Image("file:icons/logo16.png", 16, 16, false, true)));
         qspItem.setOnAction(evt -> {
-			final List<SongDisplayable> songs = Arrays.asList(SongManager.get().getSongs());
+			final List<SongDisplayable> songs = Arrays.asList(SongManager.get(true).getSongs());
 			//TODO: Determine if number of songs is above some threshold, then display warning that Quelea might be unresponsive while dialog is built.
 			SelectExportedSongsDialog dialog = new SelectExportedSongsDialog(songs, new QSPExporter());
 			dialog.showAndWait(); //This line is what takes the time for a large number of songs.
@@ -66,7 +66,7 @@ public class ExportMenu extends Menu {
 
         openLyricsItem = new MenuItem(LabelGrabber.INSTANCE.getLabel("olyrics.button"));
         openLyricsItem.setOnAction(evt -> {
-			final List<SongDisplayable> songs = Arrays.asList(SongManager.get().getSongs());
+			final List<SongDisplayable> songs = Arrays.asList(SongManager.get(true).getSongs());
 			//TODO: Determine if number of songs is above some threshold, then display warning that Quelea might be unresponsive while dialog is built.
 			SelectExportedSongsDialog dialog = new SelectExportedSongsDialog(songs, new OpenLyricsExporter());
 			dialog.showAndWait(); //This line is what takes the time for a large number of songs.
@@ -75,7 +75,7 @@ public class ExportMenu extends Menu {
 
         pdfItem = new MenuItem(LabelGrabber.INSTANCE.getLabel("pdf.button"), new ImageView(new Image("file:icons/pdf.png", 16, 16, false, true)));
         pdfItem.setOnAction(evt -> {
-			final List<SongDisplayable> songs = Arrays.asList(SongManager.get().getSongs());
+			final List<SongDisplayable> songs = Arrays.asList(SongManager.get(true).getSongs());
 			//TODO: Determine if number of songs is above some threshold, then display warning that Quelea might be unresponsive while dialog is built.
 			SelectExportedSongsDialog dialog = new SelectExportedSongsDialog(songs, new PDFExporter());
 			dialog.showAndWait(); //This line is what takes the time for a large number of songs.

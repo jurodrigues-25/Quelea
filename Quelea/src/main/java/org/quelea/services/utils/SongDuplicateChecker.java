@@ -34,7 +34,7 @@ public class SongDuplicateChecker {
     }
 
     public boolean[] checkSongs(SongDisplayable[] newSongs) {
-        final SongDisplayable[] songs = SongManager.get().getSongs();
+        final SongDisplayable[] songs = SongManager.get(true).getSongs();
         final String[] songLyrics = new String[songs.length];
         for (int i = 0; i < songLyrics.length; i++) {
             songLyrics[i] = songs[i].getLyrics(false, false, false).replaceAll("[^\\p{L}]", "");
@@ -64,7 +64,7 @@ public class SongDuplicateChecker {
      * false otherwise.
      */
     public boolean checkSong(SongDisplayable newSong) {
-        for(SongDisplayable databaseSong : SongManager.get().getSongs()) {
+        for(SongDisplayable databaseSong : SongManager.get(true).getSongs()) {
             String databaseLyrics = databaseSong.getLyrics(false, false, false).replaceAll("[^\\p{L}]", "");
             String newLyrics = newSong.getLyrics(false, false, false).replaceAll("[^\\p{L}]", "");
             int maxDistance;

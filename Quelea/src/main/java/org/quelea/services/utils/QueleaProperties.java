@@ -167,6 +167,7 @@ import static org.quelea.services.utils.QueleaPropertyKeys.webProxyUserKey;
 import static org.quelea.services.utils.QueleaPropertyKeys.webRefreshRateKey;
 import static org.quelea.services.utils.QueleaPropertyKeys.websiteLocationKey;
 import static org.quelea.services.utils.QueleaPropertyKeys.wikiPageKey;
+import static org.quelea.services.utils.QueleaPropertyKeys.useMongoDB;
 
 /**
  * Manages the properties specific to Quelea.
@@ -305,6 +306,13 @@ public final class QueleaProperties extends SortedProperties {
         }
     }
 
+    public boolean getUseMongoDB() {
+        try {
+            return Boolean.parseBoolean(getProperty(useMongoDB, "true"));
+        } catch (Exception ex) {
+            return true;
+        }
+    }
     public void setDisplayVideoTab(boolean videoTab) {
         setProperty(videoTabKey, Boolean.toString(videoTab));
         write();

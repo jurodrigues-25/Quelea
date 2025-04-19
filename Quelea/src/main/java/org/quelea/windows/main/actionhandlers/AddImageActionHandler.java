@@ -56,6 +56,7 @@ public class AddImageActionHandler implements EventHandler<ActionEvent> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(FileFilters.IMAGES);
         final List<File> files = fileChooser.showOpenMultipleDialog(QueleaApp.get().getMainWindow());
+        LOGGER.log(Level.INFO, "Initialized ADdd Image action handler");
 
         if (files != null) {
             if (files.size() > 1) {
